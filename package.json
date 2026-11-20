@@ -1,6 +1,6 @@
 {
   "name": "ha-lucid-cards",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "直观卡片 (Lucid Cards) — Compact, explicitly labeled Home Assistant Lovelace cards for lights, fans, climate, and protected outlets.",
   "type": "module",
   "main": "dist/lucid-cards.js",

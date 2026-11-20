@@ -104,6 +104,17 @@ export const BASE_CARD_STYLES = `
   .switch-track.on .switch-thumb {
     transform: translateX(16px);
   }
+  .switch-track.compact {
+    width: 32px;
+    height: 18px;
+  }
+  .switch-track.compact .switch-thumb {
+    width: 14px;
+    height: 14px;
+  }
+  .switch-track.compact.on .switch-thumb {
+    transform: translateX(14px);
+  }
   .bottom-sep {
     margin-top: 8px;
     padding-top: 7px;

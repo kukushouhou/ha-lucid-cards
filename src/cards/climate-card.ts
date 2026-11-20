@@ -90,6 +90,12 @@ const CLIMATE_STYLES = `
     color: #ffffff;
     font-weight: 500;
   }
+  .switch-btn.hidden {
+    display: none;
+  }
+  .switch-track.on {
+    background: var(--mode-accent, #3b82f6);
+  }
 `;
 
 const MODE_ORDER = ["off", "cool", "heat", "heat_cool", "auto", "dry", "fan_only"];
@@ -160,12 +166,12 @@ export class LucidClimateCard extends HTMLElement {
   }
 
   getCardSize(): number {
-    return 2;
+    return this._config?.compact ? 1 : 2;
   }
 
   getGridOptions() {
     return {
-      columns: 12,
+      columns: this._config?.compact ? 6 : 12,
       min_columns: 6,
       rows: "auto" as const,
     };
@@ -209,6 +215,9 @@ export class LucidClimateCard extends HTMLElement {
             <span class="target-temp" id="targetTemp">--</span>
             <button class="step-btn" id="plusBtn" type="button" aria-label="Increase Temperature">+</button>
           </div>
+          <button class="switch-btn hidden" id="compactToggleBtn" type="button" aria-label="Toggle Climate">
+            <div class="switch-track compact" id="swTrack"><div class="switch-thumb"></div></div>
+          </button>
         </div>
         <div class="modes-grid bottom-sep" id="modesGrid"></div>
       </ha-card>
@@ -237,6 +246,38 @@ export class LucidClimateCard extends HTMLElement {
       e.stopPropagation();
       this._stepTemperature(1);
     });
+    root.getElementById("compactToggleBtn")!.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._toggleClimate();
+    });
+  }
+
+  private _toggleClimate(): void {
+    if (!this._hass || !this._config) return;
+    const st = this._hass.states[this._config.entity];
+    if (!st) return;
+    if (st.state !== "off") {
+      this._hass.callService("climate", "turn_off", {
+        entity_id: this._config.entity,
+      });
+    } else {
+      const modes: string[] = Array.isArray(st.attributes?.hvac_modes)
+        ? st.attributes.hvac_modes
+        : [];
+      const preferred = ["cool", "heat_cool", "auto", "heat", "dry", "fan_only"].find((m) =>
+        modes.includes(m)
+      );
+      if (preferred) {
+        this._hass.callService("climate", "set_hvac_mode", {
+          entity_id: this._config.entity,
+          hvac_mode: preferred,
+        });
+      } else {
+        this._hass.callService("climate", "turn_on", {
+          entity_id: this._config.entity,
+        });
+      }
+    }
   }
 
   private _stepTemperature(dir: -1 | 1): void {
@@ -289,6 +330,8 @@ export class LucidClimateCard extends HTMLElement {
     const iconEl = root.getElementById("iconEl")!;
     const iconWrap = root.getElementById("iconWrap")!;
     const stepper = root.getElementById("stepper")!;
+    const compactToggleBtn = root.getElementById("compactToggleBtn")!;
+    const swTrack = root.getElementById("swTrack")!;
     const targetTemp = root.getElementById("targetTemp")!;
     const modesGrid = root.getElementById("modesGrid")!;
 
@@ -296,12 +339,14 @@ export class LucidClimateCard extends HTMLElement {
       nameEl.textContent = this._config.name || this._config.entity;
       subEl.textContent = t(lang, "missing_entity");
       stepper.classList.add("hidden");
+      compactToggleBtn.classList.add("hidden");
       modesGrid.classList.add("hidden");
       return;
     }
 
     const attrs = st.attributes || {};
     const state = st.state;
+    const isCompact = Boolean(this._config.compact);
     nameEl.textContent = this._config.name || attrs.friendly_name || this._config.entity;
     iconEl.setAttribute(
       "icon",
@@ -313,19 +358,36 @@ export class LucidClimateCard extends HTMLElement {
     if (state === "unavailable") {
       subEl.textContent = t(lang, "unavailable");
       stepper.classList.add("hidden");
+      compactToggleBtn.classList.add("hidden");
       return;
     }
 
     const hasTarget = attrs.temperature != null;
-    stepper.classList.toggle("hidden", !hasTarget);
+    const fmtTarget = hasTarget
+      ? `${Number.isInteger(Number(attrs.temperature)) ? Number(attrs.temperature).toFixed(0) : Number(attrs.temperature).toFixed(1)}°`
+      : null;
+
+    stepper.classList.toggle("hidden", isCompact || !hasTarget);
+    compactToggleBtn.classList.toggle("hidden", !isCompact);
     if (hasTarget) {
-      const tempNum = Number(attrs.temperature);
-      targetTemp.textContent = `${Number.isInteger(tempNum) ? tempNum.toFixed(0) : tempNum.toFixed(1)}°`;
+      targetTemp.textContent = fmtTarget!;
     }
+
+    const accent = MODE_COLORS[state] || "#3b82f6";
+    const isOn = state !== "off";
+    swTrack.style.setProperty("--mode-accent", accent);
+    swTrack.classList.toggle("on", isOn);
 
     const curRoom = attrs.current_temperature;
     const stateTxt =
       state === "off" ? t(lang, "ac_state_off") : this._modeLabel(state, lang);
+    if (isCompact) {
+      const tempPart = isOn ? fmtTarget || (curRoom != null ? `${curRoom}°` : "") : curRoom != null ? `${curRoom}°` : fmtTarget || "";
+      subEl.textContent = tempPart ? `${stateTxt} · ${tempPart}` : stateTxt;
+      modesGrid.classList.add("hidden");
+      return;
+    }
+
     subEl.textContent =
       curRoom != null
         ? `${stateTxt} · ${t(lang, "ac_room", { t: curRoom })}`
@@ -348,7 +410,6 @@ export class LucidClimateCard extends HTMLElement {
     }
     modesGrid.classList.toggle("hidden", sortedModes.length === 0);
 
-    const accent = MODE_COLORS[state] || "#3b82f6";
     modesGrid.style.setProperty("--mode-accent", accent);
     modesGrid.querySelectorAll<HTMLButtonElement>(".mode-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.mode === state);

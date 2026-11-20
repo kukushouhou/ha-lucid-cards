@@ -140,12 +140,12 @@ export class LucidLightCard extends HTMLElement {
   }
 
   getCardSize(): number {
-    return 2;
+    return this._config?.compact ? 1 : 2;
   }
 
   getGridOptions() {
     return {
-      columns: 12,
+      columns: this._config?.compact ? 6 : 12,
       min_columns: 6,
       rows: "auto" as const,
     };
@@ -348,10 +348,12 @@ export class LucidLightCard extends HTMLElement {
         ? Boolean(explicitTempCfg)
         : modes.includes("color_temp");
 
+    const isCompact = Boolean(this._config.compact);
+    swTrack.classList.toggle("compact", isCompact);
     briCol.classList.toggle("hidden", !showBri);
     tempCol.classList.toggle("hidden", !showTemp);
     const visibleCount = (showBri ? 1 : 0) + (showTemp ? 1 : 0);
-    slidersGrid.classList.toggle("hidden", visibleCount === 0);
+    slidersGrid.classList.toggle("hidden", isCompact || visibleCount === 0);
     slidersGrid.classList.toggle("single", visibleCount === 1);
     slidersGrid.classList.toggle("off-dim", !isOn);
 
@@ -381,7 +383,7 @@ export class LucidLightCard extends HTMLElement {
     tempSlider.min = String(minK);
     tempSlider.max = String(maxK);
 
-    if (showBri && !this._draggingBri) {
+    if (!isCompact && showBri && !this._draggingBri) {
       const sliderVal = isOn ? briPct : 50;
       briSlider.value = String(sliderVal);
       briSlider.style.setProperty("--bri-pct", `${isOn ? briPct : 0}%`);
@@ -389,12 +391,22 @@ export class LucidLightCard extends HTMLElement {
     }
 
     const kWord = this._kelvinWord(curK, lang);
-    if (showTemp && !this._draggingTemp) {
+    if (!isCompact && showTemp && !this._draggingTemp) {
       tempSlider.value = String(Math.min(maxK, Math.max(minK, curK)));
       tempVal.textContent = `${kWord} ${curK}K`;
     }
 
-    if (!isOn) {
+    if (isCompact) {
+      if (!isOn) {
+        subEl.textContent = t(lang, "off");
+      } else if (showBri && showTemp) {
+        subEl.textContent = `${briPct}% · ${kWord}`;
+      } else if (showBri) {
+        subEl.textContent = `${t(lang, "on")} · ${briPct}%`;
+      } else {
+        subEl.textContent = t(lang, "on");
+      }
+    } else if (!isOn) {
       subEl.textContent = visibleCount > 0 ? t(lang, "light_off_hint") : t(lang, "off");
     } else if (showBri && showTemp) {
       subEl.textContent = `${t(lang, "on")} · ${briPct}% · ${kWord}`;

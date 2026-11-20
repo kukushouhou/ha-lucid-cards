@@ -1,8 +1,24 @@
 # Lucid Cards
 
+[![GitHub Release](https://img.shields.io/github/v/release/kukushouhou/ha-lucid-cards?style=flat-square)](https://github.com/kukushouhou/ha-lucid-cards/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://github.com/hacs/integration)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
+
 [简体中文说明](./README.md)
 
-Compact, explicitly labeled Home Assistant Lovelace cards for lights, fans, climate units, and protected power outlets. Every slider and button carries clear text labels and an explicit top-right toggle switch so household members never have to guess unlabeled bars or open secondary popups.
+Compact, explicitly labeled Home Assistant Lovelace cards for lights, fans, climate units, and protected power outlets. Every card supports both **Standard Full-Width Mode** and **Compact Half-Width Mode (`compact: true`)**, with explicit switches, readable labels, and native GUI editors.
+
+[![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=kukushouhou&repository=ha-lucid-cards&category=plugin)
+
+## Screenshots
+
+### Standard Mode vs. Compact Half-Width Mode
+
+![Standard and Compact Cards Showcase](./docs/images/showcase.png)
+
+### Native Visual Card Editor
+
+![Visual Card Editor](./docs/images/visual-editor.png)
 
 ## Included Cards
 

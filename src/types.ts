@@ -28,6 +28,7 @@ export interface BaseLucidCardConfig {
   entity: string;
   name?: string;
   icon?: string;
+  compact?: boolean;
   language?: "auto" | "zh" | "en";
   grid_options?: GridOptions;
 }

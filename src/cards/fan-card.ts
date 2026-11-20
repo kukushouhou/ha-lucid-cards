@@ -90,12 +90,12 @@ export class LucidFanCard extends HTMLElement {
   }
 
   getCardSize(): number {
-    return 2;
+    return this._config?.compact ? 1 : 2;
   }
 
   getGridOptions() {
     return {
-      columns: 12,
+      columns: this._config?.compact ? 6 : 12,
       min_columns: 6,
       rows: "auto" as const,
     };
@@ -222,15 +222,20 @@ export class LucidFanCard extends HTMLElement {
       return;
     }
 
+    const isCompact = Boolean(this._config.compact);
+    swTrack.classList.toggle("compact", isCompact);
+
     const gears = this._computeGearCount(attrs);
-    if (this._gearCount !== gears) {
-      this._rebuildGears(gears, lang);
-    } else {
-      gearsGrid.querySelectorAll<HTMLButtonElement>(".gear-btn").forEach((b) => {
-        b.textContent = t(lang, "fan_gear", { n: Number(b.dataset.gear) });
-      });
+    if (!isCompact) {
+      if (this._gearCount !== gears) {
+        this._rebuildGears(gears, lang);
+      } else {
+        gearsGrid.querySelectorAll<HTMLButtonElement>(".gear-btn").forEach((b) => {
+          b.textContent = t(lang, "fan_gear", { n: Number(b.dataset.gear) });
+        });
+      }
     }
-    gearsGrid.classList.remove("hidden");
+    gearsGrid.classList.toggle("hidden", isCompact);
 
     const isOn = st.state === "on";
     const pct = Number(attrs.percentage || 0);
@@ -240,7 +245,15 @@ export class LucidFanCard extends HTMLElement {
     iconWrap.classList.toggle("on", isOn);
     swTrack.classList.toggle("on", isOn);
 
-    if (!isOn) {
+    if (isCompact) {
+      if (!isOn) {
+        subEl.textContent = t(lang, "off");
+      } else if (activeGear > 0) {
+        subEl.textContent = `${t(lang, "on")} · ${t(lang, "fan_gear", { n: activeGear })}`;
+      } else {
+        subEl.textContent = t(lang, "on");
+      }
+    } else if (!isOn) {
       subEl.textContent = t(lang, "fan_off_hint");
     } else if (activeGear > 0) {
       subEl.textContent = t(lang, "fan_current_gear", { n: activeGear });

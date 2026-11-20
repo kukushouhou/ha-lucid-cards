@@ -99,6 +99,7 @@ abstract class BaseLucidEditor extends HTMLElement {
 export class LucidLightCardEditor extends BaseLucidEditor {
   protected getDefaults(): Record<string, unknown> {
     return {
+      compact: false,
       show_brightness: true,
       drag_to_turn_on: true,
     };
@@ -123,6 +124,11 @@ export class LucidLightCardEditor extends BaseLucidEditor {
         selector: { icon: {} },
       },
       {
+        name: "compact",
+        labelKey: "ed_compact",
+        selector: { boolean: {} },
+      },
+      {
         name: "show_brightness",
         labelKey: "ed_show_bri",
         selector: { boolean: {} },
@@ -143,7 +149,9 @@ export class LucidLightCardEditor extends BaseLucidEditor {
 
 export class LucidFanCardEditor extends BaseLucidEditor {
   protected getDefaults(): Record<string, unknown> {
-    return {};
+    return {
+      compact: false,
+    };
   }
 
   protected getSchema(): HaFormSchemaItem[] {
@@ -165,6 +173,11 @@ export class LucidFanCardEditor extends BaseLucidEditor {
         selector: { icon: {} },
       },
       {
+        name: "compact",
+        labelKey: "ed_compact",
+        selector: { boolean: {} },
+      },
+      {
         name: "gears",
         labelKey: "ed_gears",
         selector: { number: { min: 2, max: 8, mode: "box" } },
@@ -176,6 +189,7 @@ export class LucidFanCardEditor extends BaseLucidEditor {
 export class LucidClimateCardEditor extends BaseLucidEditor {
   protected getDefaults(): Record<string, unknown> {
     return {
+      compact: false,
       step: 0.5,
     };
   }
@@ -197,6 +211,11 @@ export class LucidClimateCardEditor extends BaseLucidEditor {
         name: "icon",
         labelKey: "ed_icon",
         selector: { icon: {} },
+      },
+      {
+        name: "compact",
+        labelKey: "ed_compact",
+        selector: { boolean: {} },
       },
       {
         name: "step",

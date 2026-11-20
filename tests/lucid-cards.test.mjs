@@ -226,18 +226,19 @@ describe("LucidSafeSwitchCard", () => {
     card.hass = hass;
 
     const sr = card.shadowRoot;
-    assert.equal(sr.getElementById("subEl").textContent, "开启 · 265W");
+    assert.equal(sr.getElementById("subEl").textContent, "供电中 · 265W");
+    assert.equal(sr.getElementById("pillTxt").textContent, "常电保护");
 
     // Lock mode blocks turning off
     sr.getElementById("actionBtn").click();
     assert.equal(calls.length, 0);
-    assert.equal(sr.getElementById("hintTxt").textContent, "⚠️ 已拦截断电操作");
+    assert.equal(sr.getElementById("hintTxt").textContent, "已拦截关闭操作，保持持续供电");
 
     // Switch to confirm mode: 1st tap arms, 2nd tap turns off
     sr.getElementById("segConfirm").click();
     sr.getElementById("actionBtn").click();
     assert.equal(calls.length, 0);
-    assert.equal(sr.getElementById("actionBtn").textContent, "⚠️ 再点断电");
+    assert.equal(sr.getElementById("pillTxt").textContent, "再点断电");
 
     sr.getElementById("actionBtn").click();
     assert.equal(calls.length, 1);
@@ -261,5 +262,81 @@ describe("LucidSafeSwitchCard", () => {
       service: "turn_on",
       data: { entity_id: "switch.pc" },
     });
+  });
+});
+
+describe("Compact half-width mode across all 4 cards", () => {
+  it("renders compact 6-column mode cleanly for light, fan, climate, and safe-switch", () => {
+    const { hass, calls } = createMockHass({
+      "light.ceiling": {
+        entity_id: "light.ceiling",
+        state: "on",
+        attributes: {
+          friendly_name: "客厅吸顶灯",
+          brightness: 217,
+          color_temp_kelvin: 4500,
+          supported_color_modes: ["color_temp"],
+        },
+      },
+      "fan.fresh": {
+        entity_id: "fan.fresh",
+        state: "on",
+        attributes: {
+          friendly_name: "客厅新风",
+          percentage: 50,
+          percentage_step: 16.67,
+        },
+      },
+      "climate.bed": {
+        entity_id: "climate.bed",
+        state: "off",
+        attributes: {
+          friendly_name: "次卧空调",
+          temperature: 26,
+          current_temperature: 22,
+          hvac_modes: ["off", "cool", "heat"],
+        },
+      },
+      "switch.pc": {
+        entity_id: "switch.pc",
+        state: "on",
+        attributes: {
+          friendly_name: "电脑主机插座",
+          power: 247.2,
+        },
+      },
+    });
+
+    const lc = document.createElement("lucid-light-card");
+    lc.setConfig({ type: "custom:lucid-light-card", entity: "light.ceiling", compact: true });
+    lc.hass = hass;
+    assert.equal(lc.getGridOptions().columns, 6);
+    assert.ok(lc.shadowRoot.getElementById("slidersGrid").classList.contains("hidden"));
+    assert.equal(lc.shadowRoot.getElementById("subEl").textContent, "85% · 自然");
+
+    const fc = document.createElement("lucid-fan-card");
+    fc.setConfig({ type: "custom:lucid-fan-card", entity: "fan.fresh", compact: true });
+    fc.hass = hass;
+    assert.equal(fc.getGridOptions().columns, 6);
+    assert.equal(fc.shadowRoot.getElementById("subEl").textContent, "开启 · 3档");
+
+    const cc = document.createElement("lucid-climate-card");
+    cc.setConfig({ type: "custom:lucid-climate-card", entity: "climate.bed", compact: true });
+    cc.hass = hass;
+    assert.equal(cc.getGridOptions().columns, 6);
+    assert.equal(cc.shadowRoot.getElementById("subEl").textContent, "已关 · 22°");
+    cc.shadowRoot.getElementById("compactToggleBtn").click();
+    assert.deepEqual(calls[0], {
+      domain: "climate",
+      service: "set_hvac_mode",
+      data: { entity_id: "climate.bed", hvac_mode: "cool" },
+    });
+
+    const sc = document.createElement("lucid-safe-switch-card");
+    sc.setConfig({ type: "custom:lucid-safe-switch-card", entity: "switch.pc", compact: true });
+    sc.hass = hass;
+    assert.equal(sc.getGridOptions().columns, 6);
+    assert.equal(sc.shadowRoot.getElementById("subEl").textContent, "247W · 常电保护");
+    assert.ok(sc.shadowRoot.getElementById("actionBtn").classList.contains("icon-only"));
   });
 });
